@@ -6,6 +6,7 @@
 # ]
 # ///
 import asyncio
+import base64
 import json
 from typing import Any, Optional
 import os
@@ -36,8 +37,10 @@ class AshbyClient:
             if not self.api_key:
                 raise ValueError("ASHBY_API_KEY environment variable not set")
             
+            # Ashby uses Basic auth with the API key as username and empty password
+            encoded_key = base64.b64encode(f"{self.api_key}:".encode()).decode()
             self.headers = {
-                "Authorization": f"Basic {self.api_key}",
+                "Authorization": f"Basic {encoded_key}",
                 "Content-Type": "application/json"
             }
             return True
@@ -318,7 +321,7 @@ async def handle_call_tool(name: str, arguments: dict[str, Any]) -> list[types.T
                 method="POST",
                 data=arguments
             )
-            return [types.TextContent(text=f"Created candidate: {json.dumps(response, indent=2)}")]
+            return [types.TextContent(type="text", text=f"Created candidate: {json.dumps(response, indent=2)}")]
             
         elif name == "search_candidates":
             response = ashby_client._make_request(
@@ -326,7 +329,7 @@ async def handle_call_tool(name: str, arguments: dict[str, Any]) -> list[types.T
                 method="POST",
                 data=arguments
             )
-            return [types.TextContent(text=f"Search results: {json.dumps(response, indent=2)}")]
+            return [types.TextContent(type="text", text=f"Search results: {json.dumps(response, indent=2)}")]
             
         elif name == "list_candidates":
             response = ashby_client._make_request(
@@ -334,7 +337,7 @@ async def handle_call_tool(name: str, arguments: dict[str, Any]) -> list[types.T
                 method="POST",
                 data=arguments
             )
-            return [types.TextContent(text=f"Candidate list: {json.dumps(response, indent=2)}")]
+            return [types.TextContent(type="text", text=f"Candidate list: {json.dumps(response, indent=2)}")]
             
         elif name == "create_job":
             response = ashby_client._make_request(
@@ -342,7 +345,7 @@ async def handle_call_tool(name: str, arguments: dict[str, Any]) -> list[types.T
                 method="POST",
                 data=arguments
             )
-            return [types.TextContent(text=f"Created job: {json.dumps(response, indent=2)}")]
+            return [types.TextContent(type="text", text=f"Created job: {json.dumps(response, indent=2)}")]
             
         elif name == "search_jobs":
             response = ashby_client._make_request(
@@ -350,7 +353,7 @@ async def handle_call_tool(name: str, arguments: dict[str, Any]) -> list[types.T
                 method="POST",
                 data=arguments
             )
-            return [types.TextContent(text=f"Job search results: {json.dumps(response, indent=2)}")]
+            return [types.TextContent(type="text", text=f"Job search results: {json.dumps(response, indent=2)}")]
             
         elif name == "create_application":
             response = ashby_client._make_request(
@@ -358,7 +361,7 @@ async def handle_call_tool(name: str, arguments: dict[str, Any]) -> list[types.T
                 method="POST",
                 data=arguments
             )
-            return [types.TextContent(text=f"Created application: {json.dumps(response, indent=2)}")]
+            return [types.TextContent(type="text", text=f"Created application: {json.dumps(response, indent=2)}")]
             
         elif name == "list_applications":
             response = ashby_client._make_request(
@@ -366,7 +369,7 @@ async def handle_call_tool(name: str, arguments: dict[str, Any]) -> list[types.T
                 method="POST",
                 data=arguments
             )
-            return [types.TextContent(text=f"Application list: {json.dumps(response, indent=2)}")]
+            return [types.TextContent(type="text", text=f"Application list: {json.dumps(response, indent=2)}")]
             
         elif name == "create_interview":
             response = ashby_client._make_request(
@@ -374,7 +377,7 @@ async def handle_call_tool(name: str, arguments: dict[str, Any]) -> list[types.T
                 method="POST",
                 data=arguments
             )
-            return [types.TextContent(text=f"Created interview: {json.dumps(response, indent=2)}")]
+            return [types.TextContent(type="text", text=f"Created interview: {json.dumps(response, indent=2)}")]
             
         elif name == "list_interviews":
             response = ashby_client._make_request(
@@ -382,7 +385,7 @@ async def handle_call_tool(name: str, arguments: dict[str, Any]) -> list[types.T
                 method="POST",
                 data=arguments
             )
-            return [types.TextContent(text=f"Interview list: {json.dumps(response, indent=2)}")]
+            return [types.TextContent(type="text", text=f"Interview list: {json.dumps(response, indent=2)}")]
             
         elif name == "get_pipeline_metrics":
             response = ashby_client._make_request(
@@ -390,7 +393,7 @@ async def handle_call_tool(name: str, arguments: dict[str, Any]) -> list[types.T
                 method="POST",
                 data=arguments
             )
-            return [types.TextContent(text=f"Pipeline metrics: {json.dumps(response, indent=2)}")]
+            return [types.TextContent(type="text", text=f"Pipeline metrics: {json.dumps(response, indent=2)}")]
             
         elif name == "bulk_create_candidates":
             response = ashby_client._make_request(
@@ -398,7 +401,7 @@ async def handle_call_tool(name: str, arguments: dict[str, Any]) -> list[types.T
                 method="POST",
                 data=arguments
             )
-            return [types.TextContent(text=f"Bulk create results: {json.dumps(response, indent=2)}")]
+            return [types.TextContent(type="text", text=f"Bulk create results: {json.dumps(response, indent=2)}")]
             
         elif name == "bulk_update_applications":
             response = ashby_client._make_request(
@@ -406,7 +409,7 @@ async def handle_call_tool(name: str, arguments: dict[str, Any]) -> list[types.T
                 method="POST",
                 data=arguments
             )
-            return [types.TextContent(text=f"Bulk update results: {json.dumps(response, indent=2)}")]
+            return [types.TextContent(type="text", text=f"Bulk update results: {json.dumps(response, indent=2)}")]
             
         elif name == "bulk_schedule_interviews":
             response = ashby_client._make_request(
@@ -414,13 +417,13 @@ async def handle_call_tool(name: str, arguments: dict[str, Any]) -> list[types.T
                 method="POST",
                 data=arguments
             )
-            return [types.TextContent(text=f"Bulk schedule results: {json.dumps(response, indent=2)}")]
+            return [types.TextContent(type="text", text=f"Bulk schedule results: {json.dumps(response, indent=2)}")]
             
         else:
             raise ValueError(f"Unknown tool: {name}")
             
     except Exception as e:
-        return [types.TextContent(text=f"Error executing {name}: {str(e)}")]
+        return [types.TextContent(type="text", text=f"Error executing {name}: {str(e)}")]
 
 async def run():
     """Run the MCP server."""
@@ -434,5 +437,8 @@ async def run():
             ),
         ))
 
+def main():
+    asyncio.run(run())
+
 if __name__ == "__main__":
-    asyncio.run(run()) 
+    main()
