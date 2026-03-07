@@ -41,8 +41,6 @@ To connect this MCP server to Claude Desktop, add the configuration below to you
 - macOS: `~/Library/Application Support/Claude/claude_desktop_config.json`
 - Windows: `%APPDATA%\Claude\claude_desktop_config.json`
 
-#### Option 1: Install from PyPI (recommended)
-
 ```json
 {
     "mcpServers": {
@@ -60,31 +58,6 @@ To connect this MCP server to Claude Desktop, add the configuration below to you
     }
 }
 ```
-
-#### Option 2: Run from a local clone
-
-```json
-{
-    "mcpServers": {
-        "ashby": {
-            "command": "uv",
-            "args": [
-                "--directory",
-                "/absolute/path/to/ashby-mcp",
-                "run",
-                "ashby"
-            ],
-            "env": {
-                "ASHBY_API_KEY": "YOUR_ASHBY_API_KEY"
-            }
-        }
-    }
-}
-```
-
-Replace `/absolute/path/to/ashby-mcp` with the actual path to your cloned repository.
-
----
 
 Replace `YOUR_ASHBY_API_KEY` with your Ashby API key. After saving the config, restart Claude Desktop for the changes to take effect.
 
