@@ -33,9 +33,15 @@ The server parses the bundled `openapi.json` (Ashby's OpenAPI 3.1 spec) at start
 
 ## Configuration
 
-### Model Context Protocol
+### Claude Desktop Setup
 
-To use this server with the Model Context Protocol, add the following to your `claude_desktop_config.json`:
+To connect this MCP server to Claude Desktop, add the configuration below to your `claude_desktop_config.json`.
+
+**Config file location:**
+- macOS: `~/Library/Application Support/Claude/claude_desktop_config.json`
+- Windows: `%APPDATA%\Claude\claude_desktop_config.json`
+
+#### Option 1: Install from PyPI (recommended)
 
 ```json
 {
@@ -55,7 +61,32 @@ To use this server with the Model Context Protocol, add the following to your `c
 }
 ```
 
-Replace `YOUR_ASHBY_API_KEY` with your Ashby API key.
+#### Option 2: Run from a local clone
+
+```json
+{
+    "mcpServers": {
+        "ashby": {
+            "command": "uv",
+            "args": [
+                "--directory",
+                "/absolute/path/to/ashby-mcp",
+                "run",
+                "ashby"
+            ],
+            "env": {
+                "ASHBY_API_KEY": "YOUR_ASHBY_API_KEY"
+            }
+        }
+    }
+}
+```
+
+Replace `/absolute/path/to/ashby-mcp` with the actual path to your cloned repository.
+
+---
+
+Replace `YOUR_ASHBY_API_KEY` with your Ashby API key. After saving the config, restart Claude Desktop for the changes to take effect.
 
 ## Project Structure
 
