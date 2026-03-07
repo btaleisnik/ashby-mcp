@@ -11,3 +11,9 @@ wheels/
 
 # Environment variables
 .env
+
+# macOS
+.DS_Store
+
+# Claude Code
+.claude/
