@@ -41,6 +41,10 @@ To connect this MCP server to Claude Desktop, add the configuration below to you
 - macOS: `~/Library/Application Support/Claude/claude_desktop_config.json`
 - Windows: `%APPDATA%\Claude\claude_desktop_config.json`
 
+#### Single client
+
+If you only have one Ashby API key, use the standard `ASHBY_API_KEY` variable:
+
 ```json
 {
     "mcpServers": {
@@ -48,7 +52,7 @@ To connect this MCP server to Claude Desktop, add the configuration below to you
             "command": "uvx",
             "args": [
                 "--from",
-                "mcp-ashby-connector",
+                "git+https://github.com/btaleisnik/ashby-mcp",
                 "ashby"
             ],
             "env": {
@@ -59,7 +63,47 @@ To connect this MCP server to Claude Desktop, add the configuration below to you
 }
 ```
 
-Replace `YOUR_ASHBY_API_KEY` with your Ashby API key. After saving the config, restart Claude Desktop for the changes to take effect.
+#### Multiple clients
+
+To switch between multiple Ashby accounts, use named keys with the `ASHBY_API_KEY_<NAME>` pattern:
+
+```json
+{
+    "mcpServers": {
+        "ashby": {
+            "command": "uvx",
+            "args": [
+                "--from",
+                "git+https://github.com/btaleisnik/ashby-mcp",
+                "ashby"
+            ],
+            "env": {
+                "ASHBY_API_KEY_CLIENTNAME": "your-key",
+                "ASHBY_API_KEY_OTHERCLIENT": "your-other-key"
+            }
+        }
+    }
+}
+```
+
+Replace `CLIENTNAME` / `OTHERCLIENT` with whatever names make sense for your clients. The name after `ASHBY_API_KEY_` is what you'll use to select the client.
+
+When multiple keys are configured, a `select_client` tool will appear in the MCP. You'll be prompted to pick a client before making any API calls — or you can just tell Claude which client you want to work with and it'll handle it.
+
+### Claude Code Setup
+
+If you use Claude Code in the terminal, add your keys to a `.env` file in the project root:
+
+```
+# Single client
+ASHBY_API_KEY=your-key
+
+# Or multiple clients
+ASHBY_API_KEY_CLIENTNAME=your-key
+ASHBY_API_KEY_OTHERCLIENT=your-other-key
+```
+
+After saving, restart Claude Desktop or Claude Code for the changes to take effect.
 
 ## Project Structure
 
