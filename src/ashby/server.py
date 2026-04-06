@@ -36,11 +36,19 @@ class AshbyClient:
         self._load_clients()
 
     def _load_clients(self):
-        """Discover all ASHBY_API_KEY_<NAME> entries from the environment."""
+        """Discover all ASHBY_API_KEY_<NAME> entries from the environment.
+
+        Falls back to a single ASHBY_API_KEY if no named keys are found.
+        """
         for key, value in os.environ.items():
             if key.startswith(self.ENV_PREFIX) and value:
                 name = key[len(self.ENV_PREFIX):]
                 self.clients[name.lower()] = value
+        # Fallback: support the original single-key config
+        if not self.clients:
+            single_key = os.getenv("ASHBY_API_KEY")
+            if single_key:
+                self.clients["default"] = single_key
 
     def available_clients(self) -> list[str]:
         return sorted(self.clients.keys())
@@ -247,35 +255,40 @@ server = Server("ashby-mcp")
 load_dotenv()
 
 ashby_client = AshbyClient()
-if not ashby_client.available_clients():
-    print("Warning: No ASHBY_API_KEY_<NAME> variables found in environment")
+clients = ashby_client.available_clients()
+if not clients:
+    print("Warning: No Ashby API key found. Set ASHBY_API_KEY or ASHBY_API_KEY_<NAME> in env.")
+elif len(clients) == 1:
+    ashby_client.select(clients[0])
+    print(f"Connected to Ashby client: {clients[0]}")
 else:
-    print(f"Available Ashby clients: {', '.join(ashby_client.available_clients())}")
+    print(f"Available Ashby clients: {', '.join(clients)}")
 
 # Load OpenAPI spec and build tools at import time
 with open(SPEC_PATH) as f:
     _spec = json.load(f)
 _tools, _endpoint_map = _build_tools(_spec)
 
-# Prepend the client selection tool
-_tools.insert(0, types.Tool(
-    name="select_client",
-    description=(
-        "Select which Ashby client to use for API calls. "
-        "Must be called before using any other tool. "
-        f"Available clients: {', '.join(ashby_client.available_clients())}"
-    ),
-    inputSchema={
-        "type": "object",
-        "properties": {
-            "client": {
-                "type": "string",
-                "description": f"Client name. One of: {', '.join(ashby_client.available_clients())}",
-            }
+# Only add select_client tool when there are multiple clients
+if len(clients) > 1:
+    _tools.insert(0, types.Tool(
+        name="select_client",
+        description=(
+            "Select which Ashby client to use for API calls. "
+            "Must be called before using any other tool. "
+            f"Available clients: {', '.join(clients)}"
+        ),
+        inputSchema={
+            "type": "object",
+            "properties": {
+                "client": {
+                    "type": "string",
+                    "description": f"Client name. One of: {', '.join(clients)}",
+                }
+            },
+            "required": ["client"],
         },
-        "required": ["client"],
-    },
-))
+    ))
 
 
 @server.list_tools()
