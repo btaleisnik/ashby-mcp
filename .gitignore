@@ -15,5 +15,8 @@ wheels/
 # macOS
 .DS_Store
 
+# Data files
+data/
+
 # Claude Code
 .claude/

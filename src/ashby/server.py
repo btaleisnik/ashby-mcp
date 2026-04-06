@@ -23,31 +23,47 @@ import mcp.server.stdio
 
 
 class AshbyClient:
-    """Handles Ashby API communication."""
+    """Handles Ashby API communication with multi-client support."""
+
+    ENV_PREFIX = "ASHBY_API_KEY_"
 
     def __init__(self):
+        self.active_client: Optional[str] = None
         self.api_key: Optional[str] = None
         self.base_url = "https://api.ashbyhq.com"
         self.headers = {}
+        self.clients: dict[str, str] = {}
+        self._load_clients()
 
-    def connect(self) -> bool:
-        try:
-            self.api_key = os.getenv("ASHBY_API_KEY")
-            if not self.api_key:
-                raise ValueError("ASHBY_API_KEY environment variable not set")
-            encoded_key = base64.b64encode(f"{self.api_key}:".encode()).decode()
-            self.headers = {
-                "Authorization": f"Basic {encoded_key}",
-                "Content-Type": "application/json",
-            }
-            return True
-        except Exception as e:
-            print(f"Ashby connection failed: {str(e)}")
+    def _load_clients(self):
+        """Discover all ASHBY_API_KEY_<NAME> entries from the environment."""
+        for key, value in os.environ.items():
+            if key.startswith(self.ENV_PREFIX) and value:
+                name = key[len(self.ENV_PREFIX):]
+                self.clients[name.lower()] = value
+
+    def available_clients(self) -> list[str]:
+        return sorted(self.clients.keys())
+
+    def select(self, client_name: str) -> bool:
+        key = client_name.lower()
+        if key not in self.clients:
             return False
+        self.active_client = key
+        self.api_key = self.clients[key]
+        encoded_key = base64.b64encode(f"{self.api_key}:".encode()).decode()
+        self.headers = {
+            "Authorization": f"Basic {encoded_key}",
+            "Content-Type": "application/json",
+        }
+        return True
 
     def request(self, endpoint: str, data: Optional[dict] = None) -> dict:
         if not self.api_key:
-            raise ValueError("Ashby connection not established")
+            raise ValueError(
+                "No client selected. Use the select_client tool first. "
+                f"Available clients: {', '.join(self.available_clients())}"
+            )
         url = f"{self.base_url}{endpoint}"
         response = requests.post(url, headers=self.headers, json=data or {})
         response.raise_for_status()
@@ -231,13 +247,35 @@ server = Server("ashby-mcp")
 load_dotenv()
 
 ashby_client = AshbyClient()
-if not ashby_client.connect():
-    print("Failed to initialize Ashby connection")
+if not ashby_client.available_clients():
+    print("Warning: No ASHBY_API_KEY_<NAME> variables found in environment")
+else:
+    print(f"Available Ashby clients: {', '.join(ashby_client.available_clients())}")
 
 # Load OpenAPI spec and build tools at import time
 with open(SPEC_PATH) as f:
     _spec = json.load(f)
 _tools, _endpoint_map = _build_tools(_spec)
+
+# Prepend the client selection tool
+_tools.insert(0, types.Tool(
+    name="select_client",
+    description=(
+        "Select which Ashby client to use for API calls. "
+        "Must be called before using any other tool. "
+        f"Available clients: {', '.join(ashby_client.available_clients())}"
+    ),
+    inputSchema={
+        "type": "object",
+        "properties": {
+            "client": {
+                "type": "string",
+                "description": f"Client name. One of: {', '.join(ashby_client.available_clients())}",
+            }
+        },
+        "required": ["client"],
+    },
+))
 
 
 @server.list_tools()
@@ -248,6 +286,15 @@ async def handle_list_tools() -> list[types.Tool]:
 @server.call_tool()
 async def handle_call_tool(name: str, arguments: dict[str, Any]) -> list[types.TextContent]:
     try:
+        if name == "select_client":
+            client_name = arguments.get("client", "")
+            if ashby_client.select(client_name):
+                return [types.TextContent(type="text", text=f"Switched to client: {client_name}")]
+            return [types.TextContent(
+                type="text",
+                text=f"Unknown client '{client_name}'. Available: {', '.join(ashby_client.available_clients())}",
+            )]
+
         endpoint = _endpoint_map.get(name)
         if not endpoint:
             raise ValueError(f"Unknown tool: {name}")
